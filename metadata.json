@@ -1,0 +1,8 @@
+{
+  "name": "LembarPDF",
+  "description": "Workspace web lokal berbahasa Indonesia untuk menggabungkan, memisahkan, mengonversi ke PDF atau Word, dan mengedit dokumen PDF langsung di browser.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
