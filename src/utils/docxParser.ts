@@ -610,7 +610,7 @@ export async function parseDocxToHtml(arrayBuffer: ArrayBuffer): Promise<ParsedD
         if (child.localName === 't') {
           inner += escapeHtml(child.textContent || '');
         } else if (child.localName === 'tab') {
-          inner += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+          inner += '<span style="display:inline-block;width:2em"> </span>';
         } else if (child.localName === 'br') {
           const brType = getAttr(child, 'type');
           if (brType === 'page') {
@@ -636,10 +636,9 @@ export async function parseDocxToHtml(arrayBuffer: ArrayBuffer): Promise<ParsedD
             const hPx = cy > 0 ? Math.round((cy / 914400) * 96) : null;
             const imgStyle = [
               'max-width:100%',
-              'height:auto',
               'display:inline-block',
               wPx ? `width:${wPx}px` : '',
-              hPx && !wPx ? `height:${hPx}px` : '',
+              hPx ? `height:${hPx}px` : 'height:auto',
             ]
               .filter(Boolean)
               .join(';');
@@ -824,6 +823,11 @@ export async function parseDocxToHtml(arrayBuffer: ArrayBuffer): Promise<ParsedD
         (insideH && getAttr(insideH, 'val') === 'none') &&
         (!topBdr || getAttr(topBdr, 'val') === 'none');
 
+      const tblW = tblPr ? findChild(tblPr, 'tblW') : null;
+      const tblWVal = tblW ? Number.parseInt(getAttr(tblW, 'w') || '9360', 10) : 9360;
+      const tblWType = tblW ? (getAttr(tblW, 'type') || 'dxa') : 'dxa';
+      const tblWidthTwips = (tblWType === 'dxa' && tblWVal > 0) ? tblWVal : 9360;
+
       const rows = findChildren(tbl, 'tr');
       const rowsHtml = rows
         .map((tr) => {
@@ -850,7 +854,8 @@ export async function parseDocxToHtml(arrayBuffer: ArrayBuffer): Promise<ParsedD
               if (tcWVal && tcWType === 'pct') {
                 cellCss.push(`width:${Math.round(Number.parseInt(tcWVal, 10) / 50)}%`);
               } else if (tcWVal && tcWType === 'dxa') {
-                cellCss.push(`width:${Math.round(twipsToPx(Number.parseInt(tcWVal, 10)))}px`);
+                const pct = Math.min(100, Math.round((Number.parseInt(tcWVal, 10) / tblWidthTwips) * 1000) / 10);
+                cellCss.push(`width:${pct}%`);
               }
 
               const paras = findChildren(tc, 'p')

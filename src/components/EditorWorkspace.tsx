@@ -7,6 +7,7 @@ import {
   ImagePlus,
   Highlighter,
   Square,
+  Eraser,
   Signature,
   Undo2,
   Redo2,
@@ -485,20 +486,23 @@ export function EditorWorkspace({ onExported }: EditorWorkspaceProps) {
       return;
     }
 
-    if (activeTool === 'rect') {
+    if (activeTool === 'rect' || activeTool === 'whiteout') {
       overlayRef.current.setPointerCapture(e.pointerId);
       rectOriginRef.current = { x, y };
+      const isWhiteout = activeTool === 'whiteout';
       setDraftRect({
-        id: `rect-${Date.now()}`,
+        id: `${isWhiteout ? 'whiteout' : 'rect'}-${Date.now()}`,
         type: 'rect',
         x,
         y,
         width: 0,
         height: 0,
-        strokeColor: drawColor,
-        fillColor: drawColor,
-        strokeWidth: 2,
-        opacity: 0.85,
+        strokeColor: isWhiteout ? '#ffffff' : drawColor,
+        fillColor: isWhiteout ? '#ffffff' : drawColor,
+        strokeWidth: isWhiteout ? 0 : 2,
+        opacity: 1,
+        fillOpacity: isWhiteout ? 1 : 0.25,
+        isWhiteout,
       });
     }
   };
@@ -733,6 +737,7 @@ export function EditorWorkspace({ onExported }: EditorWorkspaceProps) {
         <div className="flex flex-wrap items-center gap-1">
           {[
             { id: 'select' as const, label: 'Pilih', icon: MousePointer2 },
+            { id: 'whiteout' as const, label: 'Hapus Teks', icon: Eraser },
             { id: 'text' as const, label: 'Teks', icon: Type },
             { id: 'pen' as const, label: 'Pena', icon: PenLine },
             { id: 'highlighter' as const, label: 'Stabilo', icon: Highlighter },
@@ -1019,7 +1024,7 @@ export function EditorWorkspace({ onExported }: EditorWorkspaceProps) {
               className={`absolute inset-0 ${
                 activeTool === 'text'
                   ? 'cursor-text'
-                  : activeTool === 'pen' || activeTool === 'highlighter' || activeTool === 'rect'
+                  : activeTool === 'pen' || activeTool === 'highlighter' || activeTool === 'rect' || activeTool === 'whiteout'
                     ? 'cursor-crosshair'
                     : 'cursor-default'
               }`}
@@ -1040,8 +1045,8 @@ export function EditorWorkspace({ onExported }: EditorWorkspaceProps) {
                     stroke={r.strokeColor}
                     strokeWidth={(r.strokeWidth / 595) * 100}
                     fill={r.fillColor}
-                    fillOpacity={r.opacity * 0.25}
-                    strokeOpacity={r.opacity}
+                    fillOpacity={r.fillOpacity ?? (r.isWhiteout ? 1 : r.opacity * 0.25)}
+                    strokeOpacity={r.isWhiteout ? 0 : r.opacity}
                   />
                 ))}
                 {allPaths.map((p) => {
@@ -1435,6 +1440,8 @@ export function EditorWorkspace({ onExported }: EditorWorkspaceProps) {
                     'Seret kursor di atas halaman untuk membuat coretan bebas.'}
                   {activeTool === 'highlighter' &&
                     'Seret kursor di atas teks untuk menandai dengan stabilo transparan.'}
+                  {activeTool === 'whiteout' &&
+                    'Seret kursor di atas teks yang ingin dihapus untuk menutupinya dengan warna putih solid, lalu gunakan alat Teks untuk menuliskan teks pengganti.'}
                   {activeTool === 'rect' &&
                     'Seret di atas halaman untuk membuat kotak penanda.'}
                 </p>

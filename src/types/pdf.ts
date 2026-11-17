@@ -44,6 +44,7 @@ export interface ExtractedPageData {
 export type EditorToolType =
   | 'select'
   | 'text'
+  | 'whiteout'
   | 'signature'
   | 'image'
   | 'pen'
@@ -94,6 +95,8 @@ export interface RectEditorElement extends BaseEditorElement {
   fillColor: string;
   strokeWidth: number;
   opacity: number;
+  fillOpacity?: number;
+  isWhiteout?: boolean;
 }
 
 export type EditorElement =

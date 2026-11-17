@@ -414,8 +414,8 @@ export function buildDocumentPrintCss(baseStyle?: DocumentBaseStyle): string {
   // avoid forcing opinionated heading/paragraph overrides.
   const headingRules = baseStyle
     ? `
-  h1, h2, h3, h4 { margin: 0 0 ${paraBottomPt}pt 0; font-family: inherit; }
-  p { margin: 0 0 ${paraBottomPt}pt 0; }
+  h1, h2, h3, h4, h5, h6 { margin: 0; padding: 0; font-size: inherit; font-weight: inherit; font-family: inherit; line-height: inherit; color: inherit; }
+  p { margin: 0; padding: 0; }
 `
     : `
   h1 { font-size: 18pt; font-weight: 700; margin: 0 0 10pt 0; color: #09090b; line-height: 1.25; }
@@ -426,6 +426,8 @@ export function buildDocumentPrintCss(baseStyle?: DocumentBaseStyle): string {
 
   return `
   * { box-sizing: border-box; }
+  h1, h2, h3, h4, h5, h6 { all: unset; display: block; box-sizing: border-box; }
+  p { all: unset; display: block; box-sizing: border-box; }
   body {
     margin: 0;
     padding: 0;
@@ -683,7 +685,7 @@ ${DOCUMENT_FONT_LINKS_HTML}
     for (let i = 0; i < pageFragments.length; i++) {
       sheetRoot.innerHTML = pageFragments[i];
       await waitForDocReady(doc);
-      await new Promise((r) => setTimeout(r, 40));
+      await new Promise((r) => setTimeout(r, 100));
 
       const pageCanvas = await html2canvas(sheetRoot, {
         scale: 2,
@@ -1072,16 +1074,20 @@ export async function exportEditedPdf(
         const rw = el.width * targetW;
         const rh = el.height * targetH;
         const ry = targetH - el.y * targetH - rh;
+        const effectiveFillOpacity =
+          el.fillColor !== 'transparent'
+            ? (el.fillOpacity ?? (el.isWhiteout ? 1 : el.opacity * 0.25))
+            : 0;
         outPage.drawRectangle({
           x: rx,
           y: ry,
           width: rw,
           height: rh,
-          borderColor: hexToRgb(el.strokeColor),
+          borderColor: el.strokeColor !== 'transparent' ? hexToRgb(el.strokeColor) : undefined,
           borderWidth: el.strokeWidth * ptScale,
           borderOpacity: el.opacity,
           color: el.fillColor !== 'transparent' ? hexToRgb(el.fillColor) : undefined,
-          opacity: el.fillColor !== 'transparent' ? el.opacity * 0.25 : 0,
+          opacity: effectiveFillOpacity,
         });
       } else if (el.type === 'path') {
         if (el.points.length < 2) continue;

@@ -13,13 +13,9 @@ import {
 } from 'lucide-react';
 import type { SessionExportItem } from '../types/pdf';
 import {
-  buildDocumentPrintCss,
-  DOCUMENT_FONT_LINKS_HTML,
   formatBytes,
-  getPaperMetrics,
   htmlDocumentToPdf,
   imagesToPdf,
-  paginateHtmlToPageFragments,
   triggerDownload,
 } from '../utils/pdfEngine';
 import {
@@ -95,7 +91,7 @@ function simpleMarkdownToHtml(md: string): string {
 }
 
 export function ToPdfWorkspace({ onExported }: ToPdfWorkspaceProps) {
-  const [mode, setMode] = useState<ConvertMode>('images');
+  const [mode, setMode] = useState<ConvertMode>('document');
 
   // Image mode state
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -109,14 +105,15 @@ export function ToPdfWorkspace({ onExported }: ToPdfWorkspaceProps) {
     sizeBytes: number;
     kind: string;
     html: string;
+    rawFile?: File; // kept for server-side Word conversion
     marginsMm?: DocumentMarginsMm;
     baseStyle?: DocumentBaseStyle;
   } | null>(null);
   const [docPageSize, setDocPageSize] = useState<'a4' | 'letter'>('a4');
   const [docOrientation, setDocOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [useDocMargins, setUseDocMargins] = useState<boolean>(true);
-  const [paginatedPages, setPaginatedPages] = useState<string[]>([]);
-  const [isPaginating, setIsPaginating] = useState(false);
+  const [paginatedPages] = useState<string[]>([]);
+  const [isPaginating] = useState(false);
 
   const [outputName, setOutputName] = useState('hasil-konversi');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -130,54 +127,9 @@ export function ToPdfWorkspace({ onExported }: ToPdfWorkspaceProps) {
   } | null>(null);
 
   const addImageInputRef = useRef<HTMLInputElement>(null);
-  const previewContainerRef = useRef<HTMLDivElement>(null);
-  const [previewContainerWidth, setPreviewContainerWidth] = useState<number>(640);
 
   const activeDocMargins =
     useDocMargins && docSource?.marginsMm ? docSource.marginsMm : undefined;
-
-  useEffect(() => {
-    const el = previewContainerRef.current;
-    if (!el) return;
-    const updateWidth = () => {
-      if (el.clientWidth > 0) {
-        setPreviewContainerWidth(el.clientWidth);
-      }
-    };
-    updateWidth();
-    const ro = new ResizeObserver(() => updateWidth());
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [mode, docSource]);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!docSource) {
-      setPaginatedPages([]);
-      return;
-    }
-    setIsPaginating(true);
-    paginateHtmlToPageFragments(docSource.html, {
-      pageSize: docPageSize,
-      orientation: docOrientation,
-      marginMm,
-      marginsMm: activeDocMargins,
-      baseStyle: docSource.baseStyle,
-    })
-      .then((pages) => {
-        if (!cancelled) setPaginatedPages(pages);
-      })
-      .catch(() => {
-        if (!cancelled) setPaginatedPages([docSource.html]);
-      })
-      .finally(() => {
-        if (!cancelled) setIsPaginating(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [docSource, docPageSize, docOrientation, marginMm, useDocMargins]);
 
   const readImageDimensions = (file: File): Promise<ImageItem> =>
     new Promise((resolve, reject) => {
@@ -298,6 +250,20 @@ export function ToPdfWorkspace({ onExported }: ToPdfWorkspaceProps) {
         parsedMargins = parsed.marginsMm;
         parsedBaseStyle = parsed.baseStyle;
         setUseDocMargins(Boolean(parsed.marginsMm));
+        // Store raw file for server-side Word→PDF conversion (better fidelity)
+        setDocSource({
+          name: file.name,
+          sizeBytes: file.size,
+          kind,
+          html,
+          rawFile: file,
+          marginsMm: parsedMargins,
+          baseStyle: parsedBaseStyle,
+        });
+        setOutputName(file.name.replace(/\.[^.]+$/, ''));
+        setIsProcessing(false);
+        setProgressText(null);
+        return;
       } else if (lower.endsWith('.md')) {
         kind = 'Markdown (.md)';
         const text = await file.text();
@@ -415,6 +381,44 @@ Silakan lakukan peninjauan sebelum dokumen ini dikonversi menjadi PDF.`;
         });
       } else {
         if (!docSource) return;
+
+        // Try server-side Word conversion first (highest fidelity via Microsoft Word COM)
+        if (docSource.rawFile && docSource.kind === 'Word (.docx)') {
+          try {
+            setProgressText('Mengonversi via Microsoft Word...');
+            const formData = new FormData();
+            formData.append('docx', docSource.rawFile);
+            const resp = await fetch('/api/convert-docx', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/octet-stream' },
+              body: await docSource.rawFile.arrayBuffer(),
+            });
+            if (resp.ok) {
+              const pdfBlob = await resp.blob();
+              const url = triggerDownload(pdfBlob, filename);
+              setSuccessInfo({
+                filename,
+                pageCount: 0,
+                sizeBytes: pdfBlob.size,
+                url,
+              });
+              onExported({
+                id: `exp-${Date.now()}`,
+                filename,
+                tool: 'to-pdf',
+                sizeBytes: pdfBlob.size,
+                pageCount: 0,
+                blobUrl: url,
+                createdAt: Date.now(),
+              });
+              return;
+            }
+          } catch {
+            // Server tidak tersedia, lanjut ke fallback
+          }
+        }
+
+        // Fallback: HTML-based conversion
         setProgressText('Merender halaman dokumen...');
         const res = await htmlDocumentToPdf(
           docSource.html,
@@ -425,8 +429,7 @@ Silakan lakukan peninjauan sebelum dokumen ini dikonversi menjadi PDF.`;
             marginsMm: activeDocMargins,
             baseStyle: docSource.baseStyle,
           },
-          (pct) => setProgressText(`Mengompilasi halaman PDF (${pct}%)...`),
-          paginatedPages
+          (pct) => setProgressText(`Mengompilasi halaman PDF (${pct}%)...`)
         );
         const blob = new Blob([new Uint8Array(res.bytes)], { type: 'application/pdf' });
         const url = triggerDownload(blob, filename);
@@ -463,28 +466,12 @@ Silakan lakukan peninjauan sebelum dokumen ini dikonversi menjadi PDF.`;
             Konversi ke PDF
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
-            Ubah kumpulan gambar atau dokumen Word (.docx) dan teks menjadi PDF siap cetak.
+            Ubah dokumen Word (.docx), teks, atau kumpulan gambar menjadi PDF siap cetak.
           </p>
         </div>
 
         {/* Mode Switcher */}
         <div className="flex items-center gap-1 p-1 bg-zinc-200/70 rounded-md">
-          <button
-            type="button"
-            onClick={() => {
-              setMode('images');
-              setErrorMsg(null);
-              setSuccessInfo(null);
-            }}
-            className={`px-3 py-1.5 text-xs font-medium rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
-              mode === 'images'
-                ? 'bg-white text-zinc-900 border border-zinc-200'
-                : 'text-zinc-600 hover:text-zinc-900'
-            }`}
-          >
-            <ImageIcon className="w-3.5 h-3.5" />
-            <span>Gambar ke PDF</span>
-          </button>
           <button
             type="button"
             onClick={() => {
@@ -500,6 +487,22 @@ Silakan lakukan peninjauan sebelum dokumen ini dikonversi menjadi PDF.`;
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Word / Teks ke PDF</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMode('images');
+              setErrorMsg(null);
+              setSuccessInfo(null);
+            }}
+            className={`px-3 py-1.5 text-xs font-medium rounded flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+              mode === 'images'
+                ? 'bg-white text-zinc-900 border border-zinc-200'
+                : 'text-zinc-600 hover:text-zinc-900'
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+            <span>Gambar ke PDF</span>
           </button>
         </div>
       </div>
@@ -731,7 +734,7 @@ Silakan lakukan peninjauan sebelum dokumen ini dikonversi menjadi PDF.`;
         <FileDropzone
           accept=".docx,.txt,.md,.html,.htm"
           title="Unggah berkas Word (.docx) atau Teks"
-          description="Isi dokumen akan dikonversi dan dipaginasi rapi menjadi halaman PDF standar."
+          description="Isi dokumen akan dikonversi langsung menjadi PDF. Tidak ada pratinjau — hasil seakurat mungkin dengan sumber."
           formatHint="Format: .DOCX, .TXT, .MD, .HTML"
           onFilesSelected={handleDocumentSelected}
           onLoadSample={handleLoadSampleDocument}
@@ -739,7 +742,7 @@ Silakan lakukan peninjauan sebelum dokumen ini dikonversi menjadi PDF.`;
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* Document Content Preview */}
+          {/* Document Info Card */}
           <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-lg overflow-hidden">
             <div className="px-4 py-3 bg-zinc-50/70 border-b border-zinc-200 flex items-center justify-between gap-2">
               <div className="min-w-0">
@@ -748,7 +751,6 @@ Silakan lakukan peninjauan sebelum dokumen ini dikonversi menjadi PDF.`;
                 </div>
                 <div className="text-xs font-mono tabular-nums text-zinc-500">
                   {docSource.kind} · {formatBytes(docSource.sizeBytes)}
-                  {paginatedPages.length > 0 ? ` · ${paginatedPages.length} halaman siap ekspor` : ''}
                 </div>
               </div>
               <button
@@ -760,67 +762,15 @@ Silakan lakukan peninjauan sebelum dokumen ini dikonversi menjadi PDF.`;
               </button>
             </div>
 
-            <div
-              ref={previewContainerRef}
-              className="p-4 sm:p-5 max-h-[640px] overflow-y-auto overflow-x-hidden bg-zinc-100/80 space-y-5"
-            >
-              {isPaginating ? (
-                <div className="py-16 flex flex-col items-center justify-center gap-2 text-xs text-zinc-500">
-                  <Loader2 className="w-5 h-5 animate-spin text-[#E5322D]" />
-                  <span>Menghitung tata letak halaman PDF...</span>
-                </div>
-              ) : (
-                (() => {
-                  const metrics = getPaperMetrics({
-                    pageSize: docPageSize,
-                    orientation: docOrientation,
-                    marginMm,
-                    marginsMm: activeDocMargins,
-                    baseStyle: docSource.baseStyle,
-                  });
-                  const printCss = buildDocumentPrintCss(docSource.baseStyle);
-                  const availableWidth = Math.max(240, previewContainerWidth - 48);
-                  const previewScale = Math.min(0.75, Math.max(0.25, availableWidth / metrics.pageWPx));
-                  const scaledW = Math.round(metrics.pageWPx * previewScale);
-                  const scaledH = Math.round(metrics.pageHPx * previewScale);
-
-                  return paginatedPages.map((pageHtml, idx) => {
-                    const srcDoc = `<!doctype html><html><head><meta charset="utf-8"/>${DOCUMENT_FONT_LINKS_HTML}<style>${printCss}html,body{width:${metrics.pageWPx}px;height:${metrics.pageHPx}px;overflow:hidden;background:#ffffff;}#sheet{width:${metrics.pageWPx}px;height:${metrics.pageHPx}px;padding:${metrics.marginTopPx}px ${metrics.marginRightPx}px ${metrics.marginBottomPx}px ${metrics.marginLeftPx}px;overflow:hidden;background:#ffffff;}</style></head><body><div id="sheet">${pageHtml}</div></body></html>`;
-                    return (
-                      <div key={idx} className="flex flex-col items-center">
-                        <div
-                          className="flex items-center justify-between mb-1.5 text-[11px] font-mono tabular-nums text-zinc-500"
-                          style={{ width: scaledW }}
-                        >
-                          <span>Halaman {String(idx + 1).padStart(2, '0')}</span>
-                          <span>
-                            {docPageSize.toUpperCase()} · {docOrientation === 'portrait' ? 'Potret' : 'Lanskap'}
-                          </span>
-                        </div>
-                        <div
-                          className="bg-white border border-zinc-300 overflow-hidden"
-                          style={{ width: scaledW, height: scaledH }}
-                        >
-                          <iframe
-                            title={`Pratinjau halaman ${idx + 1}`}
-                            srcDoc={srcDoc}
-                            sandbox="allow-same-origin"
-                            scrolling="no"
-                            style={{
-                              width: metrics.pageWPx,
-                              height: metrics.pageHPx,
-                              transform: `scale(${previewScale})`,
-                              transformOrigin: 'top left',
-                              border: 0,
-                              pointerEvents: 'none',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  });
-                })()
-              )}
+            <div className="p-6 flex flex-col items-center justify-center gap-3 text-center">
+              <FileText className="w-12 h-12 text-zinc-300" />
+              <div>
+                <p className="text-sm font-medium text-zinc-700">Dokumen siap dikonversi</p>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Pratinjau dinonaktifkan agar hasil PDF lebih akurat.<br />
+                  Klik tombol <strong>Konversi &amp; Unduh PDF</strong> di samping untuk mulai.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -905,7 +855,7 @@ Silakan lakukan peninjauan sebelum dokumen ini dikonversi menjadi PDF.`;
 
             <button
               type="button"
-              disabled={isProcessing || isPaginating}
+              disabled={isProcessing}
               onClick={handleConvert}
               className="w-full py-3 px-4 text-sm font-semibold bg-[#E5322D] text-white rounded-md hover:bg-[#C8231E] disabled:opacity-40 flex items-center justify-center gap-2 transition-colors"
             >
