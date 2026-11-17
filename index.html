@@ -3,24 +3,127 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LembarPDF — Workspace Pengolahan PDF Lokal</title>
+    <title>LembarPDF — Gabung &amp; Pisah PDF Online Cepat, Gratis &amp; Aman di Browser</title>
+    
+    <!-- Primary Meta Tags -->
+    <meta
+      name="title"
+      content="LembarPDF — Gabung &amp; Pisah PDF Online Cepat, Gratis &amp; Aman di Browser"
+    />
     <meta
       name="description"
-      content="Workspace web lokal berbahasa Indonesia untuk menggabungkan, memisahkan, mengonversi ke PDF atau Word, dan mengedit dokumen PDF langsung di browser."
+      content="Aplikasi pengolah PDF gratis berbahasa Indonesia. Gabungkan beberapa berkas PDF dan pisahkan halaman PDF langsung di browser tanpa upload ke server. Cepat, privat, dan aman."
     />
-    <meta property="og:title" content="LembarPDF — Workspace Pengolahan PDF Lokal" />
+    <meta
+      name="keywords"
+      content="gabung pdf, pisah pdf, merge pdf online, split pdf, potong pdf, satukan pdf, pengolah pdf lokal, pdf editor indonesia, gabung file pdf gratis, pisah halaman pdf"
+    />
+    <meta name="author" content="LembarPDF" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://lembarpdf.vercel.app/" />
+    <meta name="theme-color" content="#E5322D" />
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://lembarpdf.vercel.app/" />
+    <meta property="og:site_name" content="LembarPDF" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:title" content="LembarPDF — Gabung &amp; Pisah PDF Online Cepat, Gratis &amp; Aman" />
     <meta
       property="og:description"
-      content="Olah file PDF Anda secara privat di browser: gabung, pisah, konversi ke PDF/Word, dan edit halaman lengkap."
+      content="Olah dokumen PDF secara privat langsung di peramban: satukan banyak file atau ekstrak halaman pilihan tanpa mengunggah ke server pihak ketiga."
     />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="og:image" content="https://lembarpdf.vercel.app/favicon.svg" />
+    <meta property="og:image:alt" content="LembarPDF Logo" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:url" content="https://lembarpdf.vercel.app/" />
+    <meta name="twitter:title" content="LembarPDF — Gabung &amp; Pisah PDF Online Gratis &amp; Aman" />
+    <meta
+      name="twitter:description"
+      content="Gabung dan pisahkan dokumen PDF langsung di browser. 100% aman, privat, dan tanpa batasan."
+    />
+    <meta name="twitter:image" content="https://lembarpdf.vercel.app/favicon.svg" />
+
+    <!-- Favicon & PWA -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Fonts Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Structured Data (JSON-LD) for WebApplication -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "LembarPDF",
+        "url": "https://lembarpdf.vercel.app/",
+        "description": "Aplikasi web berbahasa Indonesia untuk menggabungkan dan memisahkan halaman PDF secara lokal di browser.",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "All",
+        "browserRequirements": "Requires JavaScript. Requires HTML5.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "IDR"
+        },
+        "featureList": [
+          "Gabung beberapa file PDF menjadi satu dokumen berurutan",
+          "Pisah halaman PDF berdasarkan rentang, nomor halaman, atau per halaman tunggal",
+          "Pemrosesan 100% client-side di browser tanpa unggah file ke server",
+          "Tanpa batas ukuran berkas dan tanpa watermark"
+        ]
+      }
+    </script>
+
+    <!-- Structured Data (JSON-LD) for FAQPage -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Apakah aman mengolah PDF di LembarPDF?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sangat aman. Semua proses penggabungan dan pemisahan file PDF dijalankan 100% secara lokal di browser komputer atau HP Anda (client-side). Berkas dokumen Anda tidak pernah diunggah ke server mana pun."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Apakah layanan LembarPDF gratis?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Ya, LembarPDF sepenuhnya gratis digunakan tanpa batas jumlah pemakaian, tanpa perlu registrasi, dan tanpa watermark pada berkas hasil."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Bagaimana cara menggabungkan berkas PDF?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Pilih menu Gabung PDF, unggah berkas PDF yang ingin disatukan, atur urutan posisi dokumen sesuai keinginan, lalu klik tombol Gabung & Unduh PDF."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Bagaimana cara memisahkan halaman dari berkas PDF?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Pilih menu Pisah PDF, unggah dokumen PDF Anda, pilih metode pemisahan (ekstrak halaman pilihan, per beberapa halaman, atau seluruh halaman), lalu unduh hasilnya sebagai PDF atau arsip ZIP."
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body class="bg-zinc-50 text-zinc-900 antialiased selection:bg-blue-600 selection:text-white">
     <div id="root"></div>

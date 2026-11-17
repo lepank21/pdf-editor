@@ -6,16 +6,10 @@ import { HomeToolGrid } from './components/HomeToolGrid';
 import { SessionHistoryDrawer } from './components/SessionHistoryDrawer';
 import { MergeWorkspace } from './components/MergeWorkspace';
 import { SplitWorkspace } from './components/SplitWorkspace';
-import { ToPdfWorkspace } from './components/ToPdfWorkspace';
-import { ToWordWorkspace } from './components/ToWordWorkspace';
-import { EditorWorkspace } from './components/EditorWorkspace';
 
 const MOBILE_TOOLS: Array<{ id: ToolId; label: string }> = [
   { id: 'merge', label: 'Gabung PDF' },
   { id: 'split', label: 'Pisah PDF' },
-  { id: 'to-pdf', label: 'Konversi ke PDF' },
-  { id: 'to-word', label: 'Konversi ke Word' },
-  { id: 'edit', label: 'Edit PDF' },
 ];
 
 export default function App() {
@@ -110,9 +104,6 @@ export default function App() {
 
             {activeView === 'merge' && <MergeWorkspace onExported={handleExported} />}
             {activeView === 'split' && <SplitWorkspace onExported={handleExported} />}
-            {activeView === 'to-pdf' && <ToPdfWorkspace onExported={handleExported} />}
-            {activeView === 'to-word' && <ToWordWorkspace onExported={handleExported} />}
-            {activeView === 'edit' && <EditorWorkspace onExported={handleExported} />}
           </div>
         )}
       </main>

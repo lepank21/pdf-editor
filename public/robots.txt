@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lembarpdf.vercel.app/sitemap.xml

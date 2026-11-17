@@ -1,0 +1,16 @@
+{
+  "name": "LembarPDF — Gabung & Pisah PDF Online",
+  "short_name": "LembarPDF",
+  "description": "Aplikasi pengolah PDF gratis & privat untuk menggabungkan dan memisahkan berkas PDF langsung di peramban.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F5F7",
+  "theme_color": "#E5322D",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
