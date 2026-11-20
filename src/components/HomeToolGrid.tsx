@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Combine,
   Scissors,
+  Minimize2,
   ArrowRight,
   ShieldCheck,
   Lock,
@@ -44,6 +45,16 @@ const TOOLS: Array<{
     iconColor: 'text-amber-600',
     iconBg: 'bg-amber-50 border-amber-200/70',
   },
+  {
+    id: 'compress',
+    title: 'Kompres PDF',
+    description:
+      'Kurangi ukuran berkas PDF secara signifikan langsung di browser. Cocok untuk pengiriman email dan unggahan dengan batasan ukuran berkas.',
+    formats: 'PDF → PDF kecil',
+    icon: Minimize2,
+    iconColor: 'text-purple-600',
+    iconBg: 'bg-purple-50 border-purple-200/70',
+  },
 ];
 
 const FAQS = [
@@ -84,7 +95,7 @@ export function HomeToolGrid({ onSelectTool }: HomeToolGridProps) {
 
       {/* 2-Tool Action Card Grid */}
       <section aria-label="Alat Utama Pengolahan PDF">
-        <div className="grid grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto gap-4">
           {TOOLS.map((tool) => {
             const Icon = tool.icon;
             return (

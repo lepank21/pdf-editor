@@ -6,10 +6,12 @@ import { HomeToolGrid } from './components/HomeToolGrid';
 import { SessionHistoryDrawer } from './components/SessionHistoryDrawer';
 import { MergeWorkspace } from './components/MergeWorkspace';
 import { SplitWorkspace } from './components/SplitWorkspace';
+import { CompressWorkspace } from './components/CompressWorkspace';
 
 const MOBILE_TOOLS: Array<{ id: ToolId; label: string }> = [
   { id: 'merge', label: 'Gabung PDF' },
   { id: 'split', label: 'Pisah PDF' },
+  { id: 'compress', label: 'Kompres PDF' },
 ];
 
 export default function App() {
@@ -104,6 +106,7 @@ export default function App() {
 
             {activeView === 'merge' && <MergeWorkspace onExported={handleExported} />}
             {activeView === 'split' && <SplitWorkspace onExported={handleExported} />}
+            {activeView === 'compress' && <CompressWorkspace onExported={handleExported} />}
           </div>
         )}
       </main>

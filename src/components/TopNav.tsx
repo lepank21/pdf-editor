@@ -12,6 +12,7 @@ interface TopNavProps {
 const NAV_ITEMS: Array<{ id: ToolId; label: string }> = [
   { id: 'merge', label: 'Gabung PDF' },
   { id: 'split', label: 'Pisah PDF' },
+  { id: 'compress', label: 'Kompres PDF' },
 ];
 
 export function TopNav({

@@ -223,6 +223,53 @@ export async function splitPdfIntoGroups(
   return results;
 }
 
+export async function compressPdf(
+  bytes: Uint8Array,
+  level: 'low' | 'medium' | 'high',
+  onProgress?: (current: number, total: number) => void
+): Promise<{ bytes: Uint8Array; pageCount: number }> {
+  const qualityMap = { low: 0.85, medium: 0.65, high: 0.40 };
+  const scaleMap   = { low: 1.0,  medium: 0.9,  high: 0.75 };
+  const quality = qualityMap[level];
+  const scale   = scaleMap[level];
+
+  const loadingTask = pdfjsLib.getDocument({ data: bytes.slice() });
+  const srcDoc = await loadingTask.promise;
+  const total  = srcDoc.numPages;
+  const outDoc = await PDFDocument.create();
+
+  for (let i = 1; i <= total; i++) {
+    const page = await srcDoc.getPage(i);
+    const viewport = page.getViewport({ scale });
+    const canvas   = document.createElement('canvas');
+    canvas.width   = Math.max(1, Math.floor(viewport.width));
+    canvas.height  = Math.max(1, Math.floor(viewport.height));
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+
+    const blob = await new Promise<Blob | null>((res) =>
+      canvas.toBlob((b) => res(b), 'image/jpeg', quality)
+    );
+    if (!blob) continue;
+    const jpegBytes = new Uint8Array(await blob.arrayBuffer());
+    const img = await outDoc.embedJpg(jpegBytes);
+
+    // Keep original page dimensions in PDF points
+    const origViewport = page.getViewport({ scale: 1.0 });
+    const wPt = origViewport.width  * (72 / 96);
+    const hPt = origViewport.height * (72 / 96);
+    const outPage = outDoc.addPage([wPt, hPt]);
+    outPage.drawImage(img, { x: 0, y: 0, width: wPt, height: hPt });
+    onProgress?.(i, total);
+  }
+
+  await loadingTask.destroy();
+  const outBytes = await outDoc.save();
+  return { bytes: outBytes, pageCount: total };
+}
+
 export async function createSamplePdfBytes(variant: 'laporan' | 'lampiran' = 'laporan'): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);

@@ -1,4 +1,4 @@
-export type ToolId = 'merge' | 'split';
+export type ToolId = 'merge' | 'split' | 'compress';
 
 export interface SessionExportItem {
   id: string;

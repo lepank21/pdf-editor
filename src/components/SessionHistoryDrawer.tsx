@@ -13,6 +13,7 @@ interface SessionHistoryDrawerProps {
 const TOOL_NAMES: Record<SessionExportItem['tool'], string> = {
   merge: 'Gabung PDF',
   split: 'Pisah PDF',
+  compress: 'Kompres PDF',
 };
 
 export function SessionHistoryDrawer({
