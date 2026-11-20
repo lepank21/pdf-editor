@@ -76,7 +76,12 @@ const FAQS = [
   {
     question: 'Apakah LembarPDF dapat digunakan di ponsel (smartphone)?',
     answer:
-      'Ya! Tampilan LembarPDF dirancang responsif sehingga Anda bisa menggabungkan atau memisahkan halaman PDF langsung dari browser Android maupun iOS.',
+      'Ya! Tampilan LembarPDF dirancang responsif sehingga Anda bisa menggabungkan, memisahkan, atau mengompres halaman PDF langsung dari browser Android maupun iOS.',
+  },
+  {
+    question: 'Bagaimana cara kerja kompres PDF di LembarPDF?',
+    answer:
+      'Fitur Kompres PDF mengoptimasi setiap halaman dokumen menggunakan kompresi gambar berkualitas tinggi dan menyusunnya kembali menjadi berkas PDF baru yang lebih ringan. Tersedia 3 tingkat kompresi (Ringan, Sedang, Tinggi) dan semuanya diproses 100% lokal di browser Anda.',
   },
 ];
 
@@ -86,10 +91,10 @@ export function HomeToolGrid({ onSelectTool }: HomeToolGridProps) {
       {/* Centered Hero Section */}
       <section className="text-center max-w-2xl mx-auto space-y-3">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-900 text-balance">
-          Gabung &amp; Pisah PDF Online Cepat, Gratis &amp; Privat
+          Gabung, Pisah &amp; Kompres PDF Online Cepat, Gratis &amp; Privat
         </h1>
         <p className="text-sm sm:text-base text-zinc-600 leading-relaxed">
-          Olah dokumen PDF Anda secara instan langsung di peramban tanpa antrean, tanpa batasan, dan tanpa pernah mengunggah berkas ke server pihak ketiga.
+          Olah dokumen PDF Anda secara instan langsung di peramban: satukan beberapa file, pisahkan halaman, atau kecilkan ukuran berkas tanpa antrean dan tanpa pernah mengunggah data ke server pihak ketiga.
         </p>
       </section>
 
