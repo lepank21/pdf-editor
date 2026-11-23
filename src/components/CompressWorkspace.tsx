@@ -22,7 +22,7 @@ const LEVELS: Array<{
   {
     id: 'low',
     label: 'Ringan',
-    desc: 'Kualitas terjaga. Kompresi ~15–25%.',
+    desc: 'Kualitas tertinggi & teks tajam. Kompresi halus ~15–25%.',
     badge: 'Kualitas Tinggi',
     badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-200',
     activeClass: 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400',
